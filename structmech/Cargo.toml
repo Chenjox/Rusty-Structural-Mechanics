@@ -1,0 +1,8 @@
+[package]
+name = "structmech"
+version = "0.1.0"
+authors = ["Chenjox"]
+edition = "2022"
+
+[dependencies]
+nalgebra = { version = "0.31.1" }
