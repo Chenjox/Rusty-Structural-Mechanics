@@ -1,8 +1,8 @@
 [package]
-name = "structmech"
+name = "gui"
 version = "0.1.0"
 authors = ["Chenjox"]
 edition = "2021"
 
 [dependencies]
-nalgebra = { version = "0.31.1" }
+structmech = { path = "../structmech" }
