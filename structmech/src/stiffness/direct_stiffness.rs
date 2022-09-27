@@ -1,3 +1,4 @@
+use libm::atan2;
 use nalgebra::DMatrix;
 use nalgebra::SMatrix;
 
@@ -62,5 +63,23 @@ impl Beam {
         }
         // Stablokal
         return res;
+    }
+}
+
+impl System {
+    pub fn global_stiffness_matrix(&self) {
+        let ps = self.get_points();
+        let sup = self.get_supports();
+
+        let mut total_dofs = ps.len() * 3;
+        for s in sup {
+            let mut d = 3;
+            for dof in s.get_free_dofs() {
+                if *dof {
+                    d = d - 1;
+                }
+            }
+            total_dofs = total_dofs - d;
+        }
     }
 }
