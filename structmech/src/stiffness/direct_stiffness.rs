@@ -81,5 +81,6 @@ impl System {
             }
             total_dofs = total_dofs - d;
         }
+        // TODO Globale Steifigkeitsmatrix
     }
 }
