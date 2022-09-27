@@ -31,6 +31,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "libm"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "292a948cd991e376cf75541fe5b97a1081d713c618b4f1b9500f8844e49eb565"
+
+[[package]]
 name = "matrixmultiply"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -161,6 +167,7 @@ dependencies = [
 name = "structmech"
 version = "0.1.0"
 dependencies = [
+ "libm",
  "nalgebra",
 ]
 

@@ -6,3 +6,4 @@ edition = "2021"
 
 [dependencies]
 nalgebra = { version = "0.31.1" }
+libm = { version = "0.2.5" }
