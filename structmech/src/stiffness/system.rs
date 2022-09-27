@@ -1,3 +1,5 @@
+use libm::atan2;
+
 /// A struct, resembling a support.
 /// The alpha is the alpha to the global coordinate system
 /// three values resemble whether its DOF is free and whether it is associated with a feather
@@ -20,11 +22,17 @@ impl Support {
     pub fn get_alpha(&self) -> f64 {
         self.alpha
     }
+    pub fn get_free_dofs(&self) -> &[bool; 3] {
+        &self.is_free
+    }
+    pub fn get_feder(&self) -> &[f64; 3] {
+        &self.federnach
+    }
 }
 
 pub struct Point {
-    x: f64,
-    y: f64,
+    pub x: f64,
+    pub y: f64,
 }
 
 pub struct Crosssection {
@@ -66,6 +74,36 @@ pub struct System {
     beams: Vec<Beam>,
     support_points: Vec<usize>,
     supports: Vec<Support>,
+}
+
+impl System {
+    pub fn get_points(&self) -> &[Point] {
+        return &self.points;
+    }
+    pub fn get_beam_points(&self) -> &[[usize; 2]] {
+        return &self.beam_points;
+    }
+    pub fn get_beams(&self) -> &[Beam] {
+        return &self.beams;
+    }
+    pub fn get_support_points(&self) -> &[usize] {
+        return &self.support_points;
+    }
+    pub fn get_supports(&self) -> &[Support] {
+        return &self.supports;
+    }
+    pub fn get_beam_lenght(&self, beamindex: usize) -> f64 {
+        let p = self.beam_points[beamindex];
+        let point_one = &self.points[p[0]];
+        let point_two = &self.points[p[1]];
+        return ((point_one.x - point_two.x).powi(2) + (point_one.y - point_two.y).powi(2)).sqrt();
+    }
+    pub fn get_beam_alpha(&self, beamindex: usize) -> f64 {
+        let p = self.beam_points[beamindex];
+        let point_one = &self.points[p[0]];
+        let point_two = &self.points[p[1]];
+        return atan2(point_one.y - point_two.y, point_one.x - point_two.x);
+    }
 }
 
 pub struct SystemLoading {
