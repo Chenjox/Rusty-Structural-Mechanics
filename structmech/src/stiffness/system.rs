@@ -30,15 +30,29 @@ impl Support {
     }
 }
 
+#[derive(Copy, Clone)]
 pub struct Point {
     pub x: f64,
     pub y: f64,
 }
 
+impl Point {
+    pub fn new(x: f64, y: f64) -> Self {
+        Point { x, y }
+    }
+}
+
+#[derive(Clone, Copy)]
 pub struct Crosssection {
     emodul: f64,
     area: f64,
     ftm: f64,
+}
+
+impl Crosssection {
+    pub fn new(emodul: f64, area: f64, ftm: f64) -> Self {
+        Crosssection { emodul, area, ftm }
+    }
 }
 
 /// x_1, x_2, phi_3 -- x_1, x_2, phi_3
@@ -51,6 +65,21 @@ pub struct Beam {
 }
 
 impl Beam {
+    pub fn new(
+        cross: Crosssection,
+        dof: [bool; 6],
+        dofstiffness: [f64; 6],
+        start: f64,
+        end: f64,
+    ) -> Beam {
+        Beam {
+            crosssection: cross,
+            dof: dof,
+            dofstiffness: dofstiffness,
+            start_dof_alpha: start,
+            end_dof_alpha: end,
+        }
+    }
     pub fn get_emodul(&self) -> f64 {
         self.crosssection.emodul
     }
@@ -59,6 +88,12 @@ impl Beam {
     }
     pub fn get_ftm(&self) -> f64 {
         self.crosssection.ftm
+    }
+    pub fn get_start_alpha(&self) -> f64 {
+        self.start_dof_alpha
+    }
+    pub fn get_end_alpha(&self) -> f64 {
+        self.end_dof_alpha
     }
     pub fn get_dofs(&self) -> &[bool] {
         &self.dof
@@ -77,6 +112,21 @@ pub struct System {
 }
 
 impl System {
+    pub fn new(
+        points: Vec<Point>,
+        beam_points: Vec<[usize; 2]>,
+        beams: Vec<Beam>,
+        support_points: Vec<usize>,
+        supports: Vec<Support>,
+    ) -> Self {
+        System {
+            points,
+            beam_points,
+            beams,
+            support_points,
+            supports,
+        }
+    }
     pub fn get_points(&self) -> &[Point] {
         return &self.points;
     }
@@ -104,10 +154,16 @@ impl System {
         let point_two = &self.points[p[1]];
         return atan2(point_one.y - point_two.y, point_one.x - point_two.x);
     }
+    pub fn get_beam_from_point(&self, beamindex: usize) -> usize {
+        return self.beam_points[beamindex][0];
+    }
+    pub fn get_beam_to_point(&self, beamindex: usize) -> usize {
+        return self.beam_points[beamindex][1];
+    }
 }
 
 pub struct SystemLoading {
-    loading_points: Vec<usize>,
+    loaded_points: Vec<usize>,
     staticloads: Vec<StaticLoad>,
     loaded_beams: Vec<usize>,
     lineloads: Vec<StaticLinearLineload>,
