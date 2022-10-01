@@ -169,10 +169,84 @@ pub struct SystemLoading {
     lineloads: Vec<StaticLinearLineload>,
 }
 
+impl SystemLoading {
+    pub fn new(
+        loaded_points: Vec<usize>,
+        staticloads: Vec<StaticLoad>,
+        loaded_beams: Vec<usize>,
+        lineloads: Vec<StaticLinearLineload>,
+    ) -> Self {
+        return SystemLoading {
+            loaded_points,
+            staticloads,
+            loaded_beams,
+            lineloads,
+        };
+    }
+
+    pub fn get_static_loads(&self) -> &[StaticLoad] {
+        &self.staticloads
+    }
+    pub fn get_static_load_points(&self) -> &[usize] {
+        &self.loaded_points
+    }
+
+    pub fn get_total_lineload_for_beam(&self, beamindex: usize) -> StaticLinearLineload {
+        let mut res = StaticLinearLineload::new_constant_load(0.0);
+        for i in 0..self.loaded_beams.len() {
+            if self.loaded_beams[i] == beamindex {
+                res.add_mut(&self.lineloads[i])
+            }
+        }
+        return res;
+    }
+}
+
 pub struct StaticLoad {
     loading: [f64; 3], // x1 x2 phi3
+}
+impl StaticLoad {
+    pub fn new(global_x: f64, global_y: f64, moment: f64) -> Self {
+        StaticLoad {
+            loading: [global_x, global_y, moment],
+        }
+    }
+    pub fn get_loading(&self) -> [f64; 3] {
+        self.loading
+    }
 }
 
 pub struct StaticLinearLineload {
     loading: [f64; 4], // Start, Ende
+}
+
+impl StaticLinearLineload {
+    pub fn new_constant_load(value: f64) -> Self {
+        StaticLinearLineload {
+            loading: [0.0, 0.0, value, value],
+        }
+    }
+    pub fn get_from_perpendicular_load(&self) -> f64 {
+        self.loading[2]
+    }
+    pub fn get_to_perpendicular_load(&self) -> f64 {
+        self.loading[3]
+    }
+    pub fn add(&self, other: StaticLinearLineload) -> Self {
+        StaticLinearLineload {
+            loading: [
+                self.loading[0] + other.loading[0],
+                self.loading[1] + other.loading[1],
+                self.loading[2] + other.loading[2],
+                self.loading[3] + other.loading[3],
+            ],
+        }
+    }
+
+    pub fn add_mut(&mut self, other: &StaticLinearLineload) {
+        self.loading[0] += other.loading[0];
+        self.loading[1] += other.loading[1];
+        self.loading[2] += other.loading[2];
+        self.loading[3] += other.loading[3];
+    }
 }
