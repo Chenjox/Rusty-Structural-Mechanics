@@ -1,5 +1,5 @@
 use libm::atan2;
-
+use std::f64::consts;
 /// A struct, resembling a support.
 /// The alpha is the alpha to the global coordinate system
 /// three values resemble whether its DOF is free and whether it is associated with a feather
@@ -152,7 +152,8 @@ impl System {
         let p = self.beam_points[beamindex];
         let point_one = &self.points[p[0]];
         let point_two = &self.points[p[1]];
-        return atan2(point_one.y - point_two.y, point_one.x - point_two.x);
+        let r = atan2(point_one.y - point_two.y, point_one.x - point_two.x);
+        return r + consts::PI;
     }
     pub fn get_beam_from_point(&self, beamindex: usize) -> usize {
         return self.beam_points[beamindex][0];
@@ -221,6 +222,11 @@ pub struct StaticLinearLineload {
 }
 
 impl StaticLinearLineload {
+    pub fn new_linear_load(begin: f64, end: f64) -> Self {
+        StaticLinearLineload {
+            loading: [0.0, 0.0, begin, end],
+        }
+    }
     pub fn new_constant_load(value: f64) -> Self {
         StaticLinearLineload {
             loading: [0.0, 0.0, value, value],

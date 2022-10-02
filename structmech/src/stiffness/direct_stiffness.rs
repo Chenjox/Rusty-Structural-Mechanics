@@ -7,6 +7,7 @@ use nalgebra::Matrix;
 use nalgebra::OMatrix;
 use nalgebra::SMatrix;
 use nalgebra::{DVector, SVector};
+use std::f64::consts;
 
 use crate::stiffness::system::*;
 
@@ -17,6 +18,28 @@ type MatrixDxD = OMatrix<f64, Dynamic, Dynamic>;
 type VectorD = DVector<f64>;
 
 impl Beam {
+    fn local_boundary_forces(
+        &self,
+        lenght: f64,
+        lineload: Option<StaticLinearLineload>,
+        local_vector: Vector6,
+    ) {
+        let (stiff, load_vec) = self.local_stiffness_and_load(lenght, lineload);
+
+        let mut rsk = stiff * local_vector + load_vec;
+        {
+            //TM Definitionen
+            rsk[0] = rsk[0]; // Druck ist irgendwie komisch
+            rsk[1] = -rsk[1];
+            rsk[2] = rsk[2];
+            rsk[3] = -rsk[3]; // Druck ist komisch
+            rsk[4] = rsk[4];
+            rsk[5] = -rsk[5];
+        }
+        let r = BeamResult::new(&rsk.as_slice());
+
+        println!("{:?}", rsk.map(|f| ((f * 1000.0).round() / 1000.0)));
+    }
     fn local_stiffness_and_load(
         &self,
         lenght: f64,
@@ -92,8 +115,8 @@ impl Beam {
                     self.get_end_alpha()
                 };
                 // Transformieren in das KOS der Unstetigkeit
-                resMat = transmatrix6x6(talpha) * resMat * transmatrix6x6(talpha).transpose(); // FIXME eventuell tauschen
-                resVec = transmatrix6x6(talpha) * resVec;
+                resMat = transmatrix6x6(talpha).transpose() * resMat * transmatrix6x6(talpha); // FIXME eventuell tauschen
+                resVec = transmatrix6x6(talpha).transpose() * resVec;
                 let m = resMat.row(i);
                 let k = resMat[(i, i)];
                 let f = resVec[i];
@@ -103,75 +126,12 @@ impl Beam {
                 let fu = uh * f * m;
                 resMat = resMat - ku;
                 resVec = resVec - fu.transpose();
-                resVec = transmatrix6x6(talpha).transpose() * resVec;
-                resMat = transmatrix6x6(talpha).transpose() * resMat * transmatrix6x6(talpha);
+                resVec = transmatrix6x6(talpha) * resVec;
+                resMat = transmatrix6x6(talpha) * resMat * transmatrix6x6(talpha).transpose();
             }
         }
         // Stablokal
         return (resMat, resVec);
-    }
-
-    fn local_stiffness(&self, lenght: f64) -> Matrix6x6 {
-        let ei = self.get_emodul() * self.get_ftm();
-        let ea = self.get_emodul() * self.get_area();
-
-        let mut res = Matrix6x6::new(
-            ea / lenght,
-            0.0,
-            0.0,
-            -ea / lenght,
-            0.0,
-            0.0,
-            0.0, // 2te Zeile
-            (12.0 * ei) / (lenght.powi(3)),
-            (6.0 * ei) / (lenght.powi(2)),
-            0.0,
-            -(12.0 * ei) / (lenght.powi(3)),
-            (6.0 * ei) / (lenght.powi(2)),
-            0.0, // 3te Zeile
-            (6.0 * ei) / (lenght.powi(2)),
-            (4.0 * ei) / (lenght),
-            0.0,
-            -(6.0 * ei) / (lenght.powi(2)),
-            (2.0 * ei) / (lenght),
-            -ea / lenght, // 4te Zeile
-            0.0,
-            0.0,
-            ea / lenght,
-            0.0,
-            0.0,
-            0.0, // 5te Zeile
-            -(12.0 * ei) / (lenght.powi(3)),
-            -(6.0 * ei) / (lenght.powi(2)),
-            0.0,
-            (12.0 * ei) / (lenght.powi(3)),
-            -(6.0 * ei) / (lenght.powi(2)),
-            0.0, // 6te Zeile
-            (6.0 * ei) / (lenght.powi(2)),
-            (2.0 * ei) / (lenght),
-            0.0,
-            -(6.0 * ei) / (lenght.powi(2)),
-            (4.0 * ei) / (lenght),
-        );
-        for i in 0..self.get_dofs().len() {
-            if self.get_dofs()[i] {
-                let talpha = if i < 3 {
-                    self.get_start_alpha()
-                } else {
-                    self.get_end_alpha()
-                };
-                res = transmatrix6x6(talpha) * res * transmatrix6x6(talpha).transpose();
-                let m = res.row(i);
-                let k = res[(i, i)];
-                let uh = 1.0 / (k + self.get_dofstiffness()[i]);
-
-                let ku = uh * m.tr_mul(&m);
-                res = res - ku;
-                res = transmatrix6x6(talpha).transpose() * res * transmatrix6x6(talpha);
-            }
-        }
-        // Stablokal
-        return res;
     }
 }
 
@@ -233,7 +193,6 @@ fn transmatrix6x6(alpha: f64) -> Matrix6x6 {
 impl System {
     pub fn global_stiffness_matrix(&self, loading: &SystemLoading) {
         let ps = self.get_points();
-        let sup = self.get_supports();
 
         let total_dofs = ps.len() * 3;
         let mut steif = MatrixDxD::zeros(total_dofs, total_dofs);
@@ -245,6 +204,7 @@ impl System {
             let to = self.get_beam_to_point(i);
             let length = self.get_beam_lenght(i);
             let alpha = self.get_beam_alpha(i);
+            println!("{:?}", alpha / consts::PI * 180.0);
 
             let lineloading = loading.get_total_lineload_for_beam(i);
 
@@ -252,10 +212,8 @@ impl System {
             let loc = b.local_stiffness_and_load(length, Some(lineloading));
             let stiff = loc.0;
             let load_vec = loc.1;
-            let f = transmatrix6x6(self.get_beam_alpha(i)).transpose()
-                * stiff
-                * transmatrix6x6(self.get_beam_alpha(i));
-            let lv = transmatrix6x6(self.get_beam_alpha(i)).transpose() * load_vec;
+            let f = transmatrix6x6(alpha).transpose() * stiff * transmatrix6x6(alpha);
+            let lv = transmatrix6x6(alpha).transpose() * load_vec;
             // Assemblierung der Globalen Stabsteifigkeitsmatrix
             for i in 0..3 {
                 for j in 0..3 {
@@ -268,8 +226,8 @@ impl System {
                     steif[(to * 3 + i, to * 3 + j)] =
                         steif[(to * 3 + i, to * 3 + j)] + f[(i + 3, j + 3)];
                 }
-                last[from * 3 + i] = last[from * 3 + i] + lv[i];
-                last[to * 3 + i] = last[to * 3 + i] + lv[i + 3];
+                last[from * 3 + i] = last[from * 3 + i] - lv[i];
+                last[to * 3 + i] = last[to * 3 + i] - lv[i + 3];
             }
         }
         // Einarbeiten der Knotenlasten
@@ -281,7 +239,7 @@ impl System {
             last[p * 3 + 1] = last[p * 3 + 1] + l.get_loading()[1];
             last[p * 3 + 2] = last[p * 3 + 2] + l.get_loading()[2];
         }
-        // Einarbeiten der Homogenen und Inhomogenen Randbedingungen
+        // Einarbeiten der Homogenen und TODO Inhomogenen Randbedingungen
         for i in 0..self.get_supports().len() {
             let sup = &self.get_supports()[i];
             let sup_point = self.get_support_points()[i];
@@ -305,9 +263,42 @@ impl System {
             None => panic!("Matrix nicht positiv definit."),
         };
 
+        // Lösung in Globalen KOS
         let result = g.solve(&last);
+
+        // Lösung der Stäbe
+        for i in 0..self.get_beams().len() {
+            let from = self.get_beam_from_point(i);
+            let to = self.get_beam_to_point(i);
+            let length = self.get_beam_lenght(i);
+            let alpha = self.get_beam_alpha(i);
+
+            let mut v = Vector6::zeros();
+            for j in 0..3 {
+                v[j] = result[from * 3 + j];
+                v[j + 3] = result[to * 3 + j];
+            }
+            let lineloading = loading.get_total_lineload_for_beam(i);
+
+            let b = &self.get_beams()[i];
+
+            let v = transmatrix6x6(alpha) * v;
+            b.local_boundary_forces(length, Some(lineloading), v);
+        }
 
         println!("{:?}", last);
         println!("{:?}", result);
+    }
+}
+
+pub struct BeamResult {
+    rsk: [f64; 6],
+}
+
+impl BeamResult {
+    pub fn new(vals: &[f64]) -> Self {
+        BeamResult {
+            rsk: [vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]],
+        }
     }
 }
