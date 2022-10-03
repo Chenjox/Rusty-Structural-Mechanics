@@ -153,7 +153,7 @@ impl System {
         let point_one = &self.points[p[0]];
         let point_two = &self.points[p[1]];
         let r = atan2(point_one.y - point_two.y, point_one.x - point_two.x);
-        return r + consts::PI;
+        return consts::PI + r;
     }
     pub fn get_beam_from_point(&self, beamindex: usize) -> usize {
         return self.beam_points[beamindex][0];

@@ -1,6 +1,8 @@
 use structmech::stiffness::direct_stiffness;
 use structmech::stiffness::system::*;
 
+use gui::visual::Visualizeable;
+
 fn main() {
     let system = System::new(
         vec![
@@ -90,4 +92,5 @@ fn main() {
     */
 
     system.global_stiffness_matrix(&system_loading);
+    println!("{}", system.visualize());
 }

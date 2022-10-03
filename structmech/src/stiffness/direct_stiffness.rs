@@ -18,27 +18,28 @@ type MatrixDxD = OMatrix<f64, Dynamic, Dynamic>;
 type VectorD = DVector<f64>;
 
 impl Beam {
-    fn local_boundary_forces(
+    fn local_mech_boundary_forces(
         &self,
         lenght: f64,
         lineload: Option<StaticLinearLineload>,
         local_vector: Vector6,
-    ) {
+    ) -> BeamResult {
         let (stiff, load_vec) = self.local_stiffness_and_load(lenght, lineload);
 
         let mut rsk = stiff * local_vector + load_vec;
         {
             //TM Definitionen
-            rsk[0] = rsk[0]; // Druck ist irgendwie komisch
+            rsk[0] = -rsk[0]; // Druck ist irgendwie komisch
             rsk[1] = -rsk[1];
             rsk[2] = rsk[2];
-            rsk[3] = -rsk[3]; // Druck ist komisch
+            rsk[3] = rsk[3]; // Druck ist komisch
             rsk[4] = rsk[4];
             rsk[5] = -rsk[5];
         }
         let r = BeamResult::new(&rsk.as_slice());
 
         println!("{:?}", rsk.map(|f| ((f * 1000.0).round() / 1000.0)));
+        return r;
     }
     fn local_stiffness_and_load(
         &self,
@@ -191,7 +192,7 @@ fn transmatrix6x6(alpha: f64) -> Matrix6x6 {
 }
 
 impl System {
-    pub fn global_stiffness_matrix(&self, loading: &SystemLoading) {
+    pub fn global_stiffness_matrix(&self, loading: &SystemLoading) -> BeamResultSet {
         let ps = self.get_points();
 
         let total_dofs = ps.len() * 3;
@@ -212,8 +213,8 @@ impl System {
             let loc = b.local_stiffness_and_load(length, Some(lineloading));
             let stiff = loc.0;
             let load_vec = loc.1;
-            let f = transmatrix6x6(alpha).transpose() * stiff * transmatrix6x6(alpha);
-            let lv = transmatrix6x6(alpha).transpose() * load_vec;
+            let f = transmatrix6x6(alpha) * stiff * transmatrix6x6(alpha).transpose();
+            let lv = transmatrix6x6(alpha) * load_vec;
             // Assemblierung der Globalen Stabsteifigkeitsmatrix
             for i in 0..3 {
                 for j in 0..3 {
@@ -245,6 +246,7 @@ impl System {
             let sup_point = self.get_support_points()[i];
             for j in 0..3 {
                 if !sup.get_free_dofs()[j] {
+                    // TODO Gedrehte Supports
                     // kein freier Knoten
                     for k in 0..total_dofs {
                         steif[(k, sup_point * 3 + j)] = 0.0;
@@ -267,6 +269,7 @@ impl System {
         let result = g.solve(&last);
 
         // Lösung der Stäbe
+        let mut r = Vec::new();
         for i in 0..self.get_beams().len() {
             let from = self.get_beam_from_point(i);
             let to = self.get_beam_to_point(i);
@@ -282,12 +285,24 @@ impl System {
 
             let b = &self.get_beams()[i];
 
-            let v = transmatrix6x6(alpha) * v;
-            b.local_boundary_forces(length, Some(lineloading), v);
+            let v = transmatrix6x6(alpha).transpose() * v;
+            r.push(b.local_mech_boundary_forces(length, Some(lineloading), v));
         }
 
         println!("{:?}", last);
         println!("{:?}", result);
+
+        return BeamResultSet::new(r);
+    }
+}
+
+pub struct BeamResultSet {
+    res: Vec<BeamResult>,
+}
+
+impl BeamResultSet {
+    pub fn new(res: Vec<BeamResult>) -> Self {
+        BeamResultSet { res }
     }
 }
 
