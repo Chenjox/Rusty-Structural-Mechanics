@@ -47,6 +47,20 @@ fn main() {
     );
     */
     /*
+
+    */
+    //println!("{}", system.visualize());
+
+    //let sol = system.matrix_stiffness_method_first_order(&system_loading);
+    //for i in 0..sol.get_results().len() {
+    //    let v = sol.get_results()[i].get_rsks();
+    //    println!("{}, {}, {}, {}, {}, {}", v[0], v[1], v[2], v[3], v[4], v[5]);
+    //}
+
+    system_second_order_stability();
+}
+
+fn system_second_order_stability() {
     let system = System::new(
         vec![
             Point::new(0.0, 4.0),
@@ -57,14 +71,14 @@ fn main() {
         vec![[0, 1], [0, 2], [0, 3]],
         vec![
             Beam::new(
-                Crosssection::new(2.1e8, 1e-3, 1e-4),
+                Crosssection::new(2.1e8, 1e-3, 3e-4),
                 [false, false, false, false, false, false],
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                 0.0,
                 0.0,
             ),
             Beam::new(
-                Crosssection::new(2.1e8, 1e-3, 1e-4),
+                Crosssection::new(2.1e8, 1e-3, 3e-4),
                 [false, false, false, false, false, false],
                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                 0.0,
@@ -89,6 +103,9 @@ fn main() {
 
     let mut detvec = Vec::new();
 
+    let max_iter = 1000;
+    let mut second_last = 0.0;
+    let mut last = 0.0;
     for i in 0..1000 {
         let incr = i as f64 / 10.0;
         let system_loading = SystemLoading::new(
@@ -104,25 +121,47 @@ fn main() {
         let mat = system.matrix_stiffness_method_second_order_matrix(&system_loading);
         let d = mat.determinant();
 
-        println!("{}, {}", 2.0 * 300.0 * incr, d);
+        //println!("{}, {}", 2.0 * 300.0 * incr, d);
         detvec.push([incr, d]);
-
+        second_last = last;
+        last = incr;
         if d < 0.0 {
             break;
         }
     }
 
+    let mut unten = second_last;
+    let mut oben = last;
+
+    for i in 0..1000 {
+
+        let half = unten + oben / 2.0;
+
+        let system_loading = SystemLoading::new(
+            vec![1, 2],
+            vec![
+                StaticLoad::new(0.0, 2.0 * 300.0 * half, 0.0),
+                StaticLoad::new(-300.0 * half, 0.0, 0.0),
+            ],
+            vec![1],
+            vec![StaticLinearLineload::new_linear_load(50.0, 50.0)],
+        );
+
+        let mat = system.matrix_stiffness_method_second_order_matrix(&system_loading);
+        let d = mat.determinant();
+
+        if d < 0.0 {
+            oben = half;
+        } else {
+            unten = half;
+        }
+        if i % 100 == 0 {
+           println!("{}",half);
+        }
+    }
+
+
     write_string_to_file("determinant.txt", detvec);
-    */
-    //println!("{}", system.visualize());
-
-    //let sol = system.matrix_stiffness_method_first_order(&system_loading);
-    //for i in 0..sol.get_results().len() {
-    //    let v = sol.get_results()[i].get_rsks();
-    //    println!("{}, {}, {}, {}, {}, {}", v[0], v[1], v[2], v[3], v[4], v[5]);
-    //}
-
-    system_second_order();
 }
 
 fn system_second_order() {

@@ -167,8 +167,8 @@ impl Beam {
         let e_1 = (30.0 / omega.powi(2)) * (f4 / 3.0 - f3 / 6.0);
         let e_2 = (20.0 / omega.powi(2)) * (1.0 + f4 / 6.0 - f3 / 3.0);
 
-        println!("e_1 = {}", e_1);
-        println!("e_2 = {}", e_2);
+        //println!("e_1 = {}", e_1);
+        //println!("e_2 = {}", e_2);
 
         let resVec = Vector6::new(
             0.0,
