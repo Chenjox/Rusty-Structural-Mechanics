@@ -38,7 +38,7 @@ impl Beam {
             rsk[4] = rsk[4];
             rsk[5] = -rsk[5];
         }
-        let r = BeamResult::new(&rsk.as_slice());
+        let r = BeamResult::new(&rsk.as_slice(), &local_vector.as_slice());
 
         //println!("{:?}", rsk.map(|f| ((f * 1000.0).round() / 1000.0)));
         return r;
@@ -63,7 +63,7 @@ impl Beam {
             rsk[4] = rsk[4];
             rsk[5] = -rsk[5];
         }
-        let r = BeamResult::new(&rsk.as_slice());
+        let r = BeamResult::new(&rsk.as_slice(), &local_vector.as_slice());
 
         //println!("{:?}", rsk.map(|f| ((f * 1000.0).round() / 1000.0)));
         return r;
@@ -637,15 +637,20 @@ impl BeamResultSet {
 
 pub struct BeamResult {
     rsk: [f64; 6],
+    rv: [f64; 6],
 }
 
 impl BeamResult {
-    pub fn new(vals: &[f64]) -> Self {
+    pub fn new(rsk: &[f64], rv: &[f64]) -> Self {
         BeamResult {
-            rsk: [vals[0], vals[1], vals[2], vals[3], vals[4], vals[5]],
+            rsk: [rsk[0], rsk[1], rsk[2], rsk[3], rsk[4], rsk[5]],
+            rv: [rv[0], rv[1], rv[2], rv[3], rv[4], rv[5]],
         }
     }
     pub fn get_rsks(&self) -> &[f64; 6] {
         return &self.rsk;
     }
 }
+
+// TODO impl System result mit reduktionsmethode...
+// TODO hinzufügen von Einzellasten im Stab.
