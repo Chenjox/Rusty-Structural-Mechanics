@@ -1,5 +1,10 @@
 use libm::atan2;
 use std::f64::consts;
+use nalgebra::OMatrix;
+use nalgebra::SMatrix;
+use nalgebra::{DVector, SVector};
+
+type Vector7 = SVector<f64, 7>;
 /// A struct, resembling a support.
 /// The alpha is the alpha to the global coordinate system
 /// three values resemble whether its DOF is free and whether it is associated with a feather
@@ -248,6 +253,7 @@ impl StaticLinearLineload {
             ],
         }
     }
+    
 
     pub fn add_mut(&mut self, other: &StaticLinearLineload) {
         self.loading[0] += other.loading[0];

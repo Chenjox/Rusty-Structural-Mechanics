@@ -13,6 +13,8 @@ use crate::stiffness::system::*;
 
 type Matrix3x3 = SMatrix<f64, 3, 3>;
 type Matrix6x6 = SMatrix<f64, 6, 6>;
+type Matrix7x7 = SMatrix<f64, 7, 7>;
+type Vector7 = SVector<f64, 7>;
 type Vector6 = SVector<f64, 6>;
 type MatrixDxD = OMatrix<f64, Dynamic, Dynamic>;
 type VectorD = DVector<f64>;
@@ -649,6 +651,56 @@ impl BeamResult {
     }
     pub fn get_rsks(&self) -> &[f64; 6] {
         return &self.rsk;
+    }
+    pub fn get_rvs(&self) -> &[f64; 6] {
+        return &self.rv;
+    }
+}
+
+impl StaticLinearLineload {
+
+}
+
+impl Beam {
+    fn lastvektor_perpendicular_first_order(&self, l: f64,load: &StaticLinearLineload, xi_start: f64, xi_end: f64) -> Vector7 {
+        let start = load.get_from_perpendicular_load() * xi_start;
+        let end =   load.get_to_perpendicular_load() * xi_end;
+        let ei = self.get_emodul() * self.get_ftm();
+        let ea = self.get_emodul() * self.get_area();
+
+        let v: Vector7 = Vector7::new(
+            0.0,
+            (1.0/30.0 * start + 1.0/120.0 * end)*ei*l.powi(4),
+            (1.0/8.0 * start + 1.0/24.0 * end  )*ei*l.powi(3),
+            (-1.0/3.0 * start + -1.0/6.0 * end ),
+            (-1.0/2.0 * start + -1.0/2.0 * end ),
+            0.0,
+            1.0
+        );
+        return v;
+    }
+    fn uebertragungsmatrix_first_order(&self, length: f64) -> Matrix7x7 {
+        //let v: Vector7 = Vector7::new(
+        //    res.get_rvs()[0],
+        //    res.get_rvs()[1],
+        //    res.get_rvs()[2],
+        //    res.get_rsks()[2],
+        //    res.get_rsks()[1],
+        //    res.get_rsks()[0],
+        //    1.0
+        //);
+
+        let ei = self.get_emodul() * self.get_ftm();
+        let ea = self.get_emodul() * self.get_area();
+        let m = Matrix7x7::new(
+            1.0, 0.0,    0.0,                     0.0,                            0.0, length/ea, 0.0, // 2. Zeile
+            0.0, 1.0, length, -length*length/(2.0*ei), -length*length*length/(6.0*ei), 0.0,       0.0, // 3. Zeile
+            0.0, 0.0,    1.0,            -length/(ei),        -length*length/(2.0*ei), 0.0,       0.0, // 4. Zeile
+            0.0, 0.0,    0.0,                     1.0,                         length, 0.0,       0.0, // 5. Zeile
+            0.0, 0.0,    0.0,                     0.0,                            1.0, 0.0,       0.0, // 6. Zeile
+            0.0, 0.0,    0.0,                     0.0,                            0.0, 1.0,       0.0, // 7. Zeile
+            0.0, 0.0,    0.0,                     0.0,                            0.0, 0.0,       1.0
+        );
     }
 }
 
