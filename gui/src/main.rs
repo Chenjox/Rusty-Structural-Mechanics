@@ -62,8 +62,8 @@ fn main() {
         );
         let r = &sol.get_results()[i];
         let mut resVec = Vec::new();
-        for point in 0..11 {
-            let inkr = 0.1 * point as f64;
+        for point in 0..101 {
+            let inkr = 0.01 * point as f64;
             let v = r.get_internals_at(r.get_beam_lenght() * inkr);
             resVec.push([
                 r.get_beam_lenght() * inkr,
