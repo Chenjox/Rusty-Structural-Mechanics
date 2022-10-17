@@ -2,6 +2,7 @@ use std::f64::consts;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use structmech::stiffness;
 use structmech::stiffness::direct_stiffness;
 use structmech::stiffness::system::*;
 
@@ -134,7 +135,6 @@ fn system_second_order_stability() {
     let mut oben = last;
 
     for i in 0..1000 {
-
         let half = unten + oben / 2.0;
 
         let system_loading = SystemLoading::new(
@@ -156,10 +156,9 @@ fn system_second_order_stability() {
             unten = half;
         }
         if i % 100 == 0 {
-           println!("{}",half);
+            println!("{}", half);
         }
     }
-
 
     write_string_to_file("determinant.txt", detvec);
 }

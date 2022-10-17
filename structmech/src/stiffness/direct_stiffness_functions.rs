@@ -37,3 +37,58 @@ fn func_f4_p(omega: f64) -> f64 {
         return numer / denom;
     }
 }
+
+pub(crate) fn transmatrix3x3(alpha: f64) -> Matrix3x3 {
+    Matrix3x3::new(
+        cos(alpha),
+        sin(alpha),
+        0.0,
+        -sin(alpha),
+        cos(alpha),
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    )
+}
+
+pub(crate) fn transmatrix6x6(alpha: f64) -> Matrix6x6 {
+    Matrix6x6::new(
+        cos(alpha),
+        sin(alpha),
+        0.0,
+        0.0,
+        0.0,
+        0.0, //
+        -sin(alpha),
+        cos(alpha),
+        0.0,
+        0.0,
+        0.0,
+        0.0, //
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0, //
+        0.0,
+        0.0,
+        0.0,
+        cos(alpha),
+        sin(alpha),
+        0.0, //
+        0.0,
+        0.0,
+        0.0,
+        -sin(alpha),
+        cos(alpha),
+        0.0, //
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    )
+}
