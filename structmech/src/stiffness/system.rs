@@ -1,8 +1,8 @@
 use libm::atan2;
-use std::f64::consts;
 use nalgebra::OMatrix;
 use nalgebra::SMatrix;
 use nalgebra::{DVector, SVector};
+use std::f64::consts;
 
 type Vector7 = SVector<f64, 7>;
 /// A struct, resembling a support.
@@ -61,6 +61,7 @@ impl Crosssection {
 }
 
 /// x_1, x_2, phi_3 -- x_1, x_2, phi_3
+#[derive(Clone, Copy)]
 pub struct Beam {
     crosssection: Crosssection,
     dof: [bool; 6],
@@ -222,6 +223,7 @@ impl StaticLoad {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct StaticLinearLineload {
     loading: [f64; 4], // Start, Ende
 }
@@ -253,7 +255,6 @@ impl StaticLinearLineload {
             ],
         }
     }
-    
 
     pub fn add_mut(&mut self, other: &StaticLinearLineload) {
         self.loading[0] += other.loading[0];

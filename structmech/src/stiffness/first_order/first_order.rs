@@ -22,7 +22,7 @@ impl Beam {
         lineload: Option<StaticLinearLineload>,
         local_vector: Vector6,
     ) -> BeamResult {
-        let (stiff, load_vec) = self.local_stiffness_and_load_first_order(length, lineload);
+        let (stiff, load_vec) = self.local_stiffness_and_load_first_order(length, lineload.clone());
 
         let mut rsk = stiff * local_vector + load_vec;
         {
@@ -34,7 +34,8 @@ impl Beam {
             rsk[4] = rsk[4];
             rsk[5] = -rsk[5];
         }
-        let r = BeamResult::new(&rsk.as_slice(), &local_vector.as_slice());
+        let ll = lineload.unwrap_or_else(|| StaticLinearLineload::new_constant_load(0.0));
+        let r = BeamResult::new(&rsk.as_slice(), &local_vector.as_slice(), length, self, &ll);
 
         //println!("{:?}", rsk.map(|f| ((f * 1000.0).round() / 1000.0)));
         return r;
@@ -197,5 +198,105 @@ impl System {
         }
 
         return BeamResultSet::new(r);
+    }
+}
+
+impl BeamResult {
+    pub fn get_internals_at(&self, x: f64) -> [f64; 6] {
+        let mut mat = self.uebertragungsmatrix_first_order(x);
+        let vec = self.lastvektor_perpendicular_first_order(0.0, x);
+
+        for i in 0..7 {
+            mat[(6, i)] = vec[i];
+        }
+        let v = Vector7::from_row_slice(&[
+            self.get_rvs()[0],
+            self.get_rvs()[1],
+            self.get_rvs()[2],
+            self.get_rsks()[2],
+            self.get_rsks()[1],
+            self.get_rsks()[0],
+            1.0,
+        ]);
+        let v = mat * v;
+        return [v[5], v[4], v[3], v[0], v[1], v[2]];
+    }
+    fn lastvektor_perpendicular_first_order(&self, start: f64, end: f64) -> Vector7 {
+        let l = end - start;
+        let rezi_length = 1.0 / l;
+        let start = self.get_loading().get_from_perpendicular_load() * start * rezi_length;
+        let end = self.get_loading().get_to_perpendicular_load() * end * rezi_length;
+        let b = self.get_beam();
+        let ei = b.get_emodul() * b.get_ftm();
+        let ea = b.get_emodul() * b.get_area();
+
+        let v: Vector7 = Vector7::from_row_slice(&[
+            0.0,
+            (1.0 / 30.0 * start + 1.0 / 120.0 * end) * ei * l.powi(4),
+            (1.0 / 8.0 * start + 1.0 / 24.0 * end) * ei * l.powi(3),
+            (-1.0 / 3.0 * start + -1.0 / 6.0 * end),
+            (-1.0 / 2.0 * start + -1.0 / 2.0 * end),
+            0.0,
+            1.0,
+        ]);
+        return v;
+    }
+    fn uebertragungsmatrix_first_order(&self, dlength: f64) -> Matrix7x7 {
+        let length = dlength;
+        let b = self.get_beam();
+        let ei = b.get_emodul() * b.get_ftm();
+        let ea = b.get_emodul() * b.get_area();
+        let m = Matrix7x7::from_row_slice(&[
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            length / ea,
+            0.0, // 2. Zeile
+            0.0,
+            1.0,
+            length,
+            -length * length / (2.0 * ei),
+            -length * length * length / (6.0 * ei),
+            0.0,
+            0.0, // 3. Zeile
+            0.0,
+            0.0,
+            1.0,
+            -length / (ei),
+            -length * length / (2.0 * ei),
+            0.0,
+            0.0, // 4. Zeile
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            length,
+            0.0,
+            0.0, // 5. Zeile
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0,
+            0.0, // 6. Zeile
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+            0.0, // 7. Zeile
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            1.0,
+        ]);
+        return m;
     }
 }
