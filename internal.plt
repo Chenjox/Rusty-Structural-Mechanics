@@ -1,5 +1,5 @@
 set datafile separator ','
-set multiplot
+set multiplot layout 1, 2
 #set terminal postscript
 #set output '| ps2pdf - output.pdf'
 set grid xtics ytics
@@ -9,9 +9,10 @@ set xrange [0:6]
 
 set origin 0.0, 0.0
 
-plot for [col=2:4] 'out1.csv' using 1:col with lines lc rgb "red"
 
-#plot for [col=5:7] 'out1.csv' using 1:(column(col)*100) with lines lc rgb "blue"
+plot for [col=2:4] 'out1.csv' using 1:col with lines lc rgb "red" 
+
+plot for [col=5:7] 'out1.csv' using 1:col with lines lc rgb "blue"
 
 unset ytics
 

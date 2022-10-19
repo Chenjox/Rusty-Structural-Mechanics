@@ -6,7 +6,7 @@ use structmech::stiffness;
 use structmech::stiffness::direct_stiffness;
 use structmech::stiffness::system::*;
 
-use gui::visual::Visualizeable;
+use gui::visual::*;
 
 fn main() {
     let system = System::new(
@@ -60,6 +60,7 @@ fn main() {
             "u_1 = {}, v_1 = {}, phi_1 = {}, u_2 = {}, v_2 = {}, phi_2 = {}",
             v[0], v[1], v[2], v[3], v[4], v[5]
         );
+
         let r = &sol.get_results()[i];
         let mut resVec = Vec::new();
         for point in 0..101 {
@@ -75,8 +76,9 @@ fn main() {
                 v[5],
             ]);
         }
-        write_string_to_file_6(&format!("out{}.csv", i), resVec);
+        //write_string_to_file_6(&format!("out{}.csv", i), resVec);
     }
+    println!("{}", visualize_asymptote(&system));
 
     //system_second_order_stability();
 }

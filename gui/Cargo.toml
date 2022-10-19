@@ -5,4 +5,5 @@ authors = ["Chenjox"]
 edition = "2021"
 
 [dependencies]
+nalgebra = { version = "0.31.1" }
 structmech = { path = "../structmech" }
