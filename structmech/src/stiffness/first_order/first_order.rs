@@ -207,7 +207,7 @@ impl BeamResult {
         let vec = self.lastvektor_perpendicular_first_order(0.0, x);
 
         for i in 0..7 {
-            mat[(6, i)] += vec[i];
+            mat[(i, 6)] += vec[i];
         }
         let v = Vector7::from_row_slice(&[
             self.get_rvs()[0],
@@ -227,8 +227,10 @@ impl BeamResult {
         }
         let l = end_l - start_l;
         let rezi_length = 1.0 / self.get_beam_lenght();
-        let start = self.get_loading().get_from_perpendicular_load() * start_l * rezi_length;
-        let end = self.get_loading().get_to_perpendicular_load() * end_l * rezi_length;
+        let from_load = self.get_loading().get_from_perpendicular_load();
+        let to_load = self.get_loading().get_to_perpendicular_load();
+        let start = from_load * (1.0 - start_l * rezi_length) + to_load * (start_l * rezi_length);
+        let end = from_load * (1.0 - end_l * rezi_length) + to_load * (end_l * rezi_length);
         let b = self.get_beam();
         let ei = b.get_emodul() * b.get_ftm();
         //let ea = b.get_emodul() * b.get_area();
@@ -237,10 +239,10 @@ impl BeamResult {
             0.0,
             ((1.0 / 30.0) * start + (1.0 / 120.0) * end) * l.powi(4) / ei,
             ((1.0 / 8.0) * start + (1.0 / 24.0) * end) * l.powi(3) / ei,
-            ((-1.0 / 3.0) * start + (-1.0 / 6.0) * end),
-            ((-1.0 / 2.0) * start + (-1.0 / 2.0) * end),
+            ((-1.0 / 3.0) * start + (-1.0 / 6.0) * end) * l.powi(2),
+            ((-1.0 / 2.0) * start + (-1.0 / 2.0) * end) * l,
             0.0,
-            1.0,
+            0.0,
         ]);
         return v;
     }
