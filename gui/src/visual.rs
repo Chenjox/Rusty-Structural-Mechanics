@@ -29,8 +29,31 @@ void balken(pair z1, pair z2) {
   path p = (z1 -- z2);
   draw(p,black + linewidth(0.5mm));
   //die gestrichelte
-  //draw(shift()*p,black + linewidth(0.5mm));
+  path p = (rotate(degrees,z1)*shift(0.05,-0.05)*z1 -- rotate(degrees,z2)*shift(-0.05,-0.05)*z2);
+  draw(p,black + linewidth(0.3mm)+dashed);
+}
+
+// Für die Stabanschlüsse
+void anschluss(pair z1, pair z2, real beam_degree, bool[] dof, real dof_degree){
+  pair dir = unit(z2 - z1);
+  if(dof[0]){
+    pair r1 = z2 - 0.1*dir;
+    fill(rotate(beam_degree+dof_degree+90,r1)*box(r1 + (0.05,0.1),r1 - (0.05,0.1)),white);
+    draw(rotate(beam_degree+dof_degree+90,r1)*( r1 + (0.05,0.1) -- r1 + (0.05,-0.1) ));
+    draw(rotate(beam_degree+dof_degree+90,r1)*( r1 + (-0.05,0.1) -- r1 + (-0.05,-0.1) ));
   }
+  if(dof[1]){
+    pair r1 = z2 - 0.1*dir;
+    fill(rotate(beam_degree+dof_degree,r1)*box(r1 + (0.05,0.1),r1 - (0.05,0.1)),white);
+    draw(rotate(beam_degree+dof_degree,r1)*( r1 + (0.05,0.1) -- r1 + (0.05,-0.1) ));
+    draw(rotate(beam_degree+dof_degree,r1)*( r1 + (-0.05,0.1) -- r1 + (-0.05,-0.1) ));
+  }
+  if(dof[2]){
+    pair z = z2 - 0.1*dir;
+    filldraw(circle(z,0.1),white);
+    draw(circle(z,0.1),black);
+  }
+}
 ",
     );
     for bi in 0..sys.get_points().len() {
@@ -42,11 +65,11 @@ void balken(pair z1, pair z2) {
         let from = sys.get_beam_from_point(bi);
         let to = sys.get_beam_to_point(bi);
 
-        let alph = sys.get_beam_alpha(bi);
+        let alph = sys.get_beam_alpha(bi) / consts::PI * 180.0;
 
         //println!("{}", alph / consts::PI * 180.0);
 
-        s.push_str(&format!("balken(p{},p{});\n", from, to));
+        s.push_str(&format!("balken(p{},p{},{});\n", from, to, alph));
     }
     for supi in 0..sys.get_supports().len() {
         let p = sys.get_support_points()[supi];
@@ -60,6 +83,34 @@ void balken(pair z1, pair z2) {
             supi, dofs[0], dofs[1], dofs[2]
         ));
         s.push_str(&format!("auflager(p{},auf{},{});\n", p, supi, alpha));
+    }
+    for bi in 0..sys.get_beams().len() {
+        let from = sys.get_beam_from_point(bi);
+        let to = sys.get_beam_to_point(bi);
+        let dofs = sys.get_beams()[bi].get_dofs();
+        let from_alpha = sys.get_beams()[bi].get_start_alpha();
+        let to_alpha = sys.get_beams()[bi].get_end_alpha();
+
+        let alph = sys.get_beam_alpha(bi) / consts::PI * 180.0;
+
+        s.push_str(&format!(
+            "bool[] ans1{} = {{ {},{},{} }};\n",
+            bi, dofs[0], dofs[1], dofs[2]
+        ));
+        s.push_str(&format!(
+            "bool[] ans2{} = {{ {},{},{} }};\n",
+            bi, dofs[3], dofs[4], dofs[5]
+        ));
+        s.push_str(&format!(
+            "anschluss(p{},p{},{}, ans1{}, {});\n",
+            to, from, alph, bi, to_alpha
+        ));
+        s.push_str(&format!(
+            "anschluss(p{},p{},{}, ans2{}, {});\n",
+            from, to, alph, bi, from_alpha
+        ));
+
+        //println!("{}", alph / consts::PI * 180.0);
     }
     return s;
 }
