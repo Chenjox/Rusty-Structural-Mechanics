@@ -78,9 +78,12 @@ fn main() {
         }
         //write_string_to_file_6(&format!("out{}.csv", i), resVec);
     }
-    println!("{}", visualize_asymptote(&system));
+    write_file(
+        "hello.asy",
+        &visualize_result_asymptote(&system, &sol, 10, 1),
+    );
 
-    //system_second_order_stability();
+    system_second_order_stability();
 }
 
 fn system_second_order_stability() {
@@ -181,6 +184,7 @@ fn system_second_order_stability() {
             println!("{}", half);
         }
     }
+    write_file("hello2.asy", &visualize_asymptote(&system));
 
     write_string_to_file("determinant.txt", detvec);
 }
@@ -267,6 +271,21 @@ fn write_string_to_file_6(nam: &str, l: Vec<[f64; 7]>) {
         Ok(file) => file,
     };
     match file.write_all(r.as_bytes()) {
+        Err(why) => {} //error!("couldn't write to {}: {}", nam, why),
+        Ok(_) => {}    //info!("successfully wrote to {}", nam),
+    }
+}
+
+fn write_file(name: &str, s: &str) {
+    let path = Path::new(&name);
+    let mut file = match File::create(&path) {
+        Err(why) => {
+            //error!("Couldn't create {}: {}", nam, why);
+            return;
+        }
+        Ok(file) => file,
+    };
+    match file.write_all(s.as_bytes()) {
         Err(why) => {} //error!("couldn't write to {}: {}", nam, why),
         Ok(_) => {}    //info!("successfully wrote to {}", nam),
     }

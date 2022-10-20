@@ -1,4 +1,5 @@
 use std::f64::consts;
+use structmech::stiffness::direct_stiffness::BeamResultSet;
 use structmech::stiffness::system::*;
 
 pub fn visualize_asymptote(sys: &System) -> String {
@@ -9,10 +10,10 @@ unitsize(1cm);
 
 // Um die Auflager zu zeichnen.
 void auflager(pair z, bool[] dof, real degrees) {
-  if(!dof[0]){
+  if(dof[0]){
     draw(rotate(degrees,z)*(z+(0.0,0.25) -- z+(-0.0,-0.25)), black + linewidth(0.5mm));
   }
-  if(!dof[1]){
+  if(dof[1]){
     draw(rotate(degrees,z)*(z+(0.25,0.0) -- z+(-0.25,-0.0)), black + linewidth(0.5mm));
   }
   if(dof[2]){
@@ -24,7 +25,7 @@ void auflager(pair z, bool[] dof, real degrees) {
 }
 
 //Um Balken darzustellen
-void balken(pair z1, pair z2) {
+void balken(pair z1, pair z2, real degrees) {
   //die normale Linie
   path p = (z1 -- z2);
   draw(p,black + linewidth(0.5mm));
@@ -111,6 +112,64 @@ void anschluss(pair z1, pair z2, real beam_degree, bool[] dof, real dof_degree){
         ));
 
         //println!("{}", alph / consts::PI * 180.0);
+    }
+    return s;
+}
+
+pub fn visualize_result_asymptote(
+    sys: &System,
+    res: &BeamResultSet,
+    samples: u64,
+    dof_s: usize,
+) -> String {
+    let mut s = String::new();
+    s.push_str(&visualize_asymptote(sys));
+
+    // Zuerst müssen wir alle Werte in Erfahrung bringen.
+    let mut resultsMoment = Vec::new();
+    for b in 0..res.get_results().len() {
+        let resu = &res.get_results()[b];
+        let l = resu.get_beam_lenght();
+
+        let mut moment = Vec::new();
+        for sam in 0..=samples {
+            let inter = sam as f64 / samples as f64;
+            let m = resu.get_internals_at(l * inter)[dof_s];
+            moment.push(m);
+        }
+        resultsMoment.push(moment);
+    }
+    // Anschließend müssen wir das Maximum in erfahrung brigen.
+    let mut max = 0.0_f64;
+    for m in resultsMoment {
+        for f in m {
+            max = max.max(f.abs());
+        }
+    }
+    // Dessen Kehrwert der Skalierer ist.
+    let r = 1.0 / max;
+    // Jetzt der zweite durchlauf
+    for b in 0..res.get_results().len() {
+        let beam = sys.get_beams()[b];
+        let resu = &res.get_results()[b];
+        let l = resu.get_beam_lenght();
+
+        let start = sys.get_beam_from_point(b);
+        let alph = sys.get_beam_alpha(b) / consts::PI * 180.0;
+
+        s.push_str(&format!("path b{} = (0.0,0.0) --", b));
+
+        for sam in 0..=samples {
+            let inter = sam as f64 / samples as f64;
+            let m = resu.get_internals_at(l * inter)[dof_s];
+            s.push_str(&format!("({0:.5},{1:.5}) -- ", l * inter, m * r));
+        }
+        s.push_str(&format!("({},0.0) -- cycle;\n", l));
+
+        s.push_str(&format!(
+            "draw(rotate({},p{})*shift(p{})*b{},red);\n",
+            alph, start, start, b
+        ));
     }
     return s;
 }
