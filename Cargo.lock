@@ -24,6 +24,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f5715e491b5a1598fc2bef5a606847b5dc1d48ea625bd3c02c00de8285591da"
 
 [[package]]
+name = "fuzzy"
+version = "0.1.0"
+dependencies = [
+ "libm",
+]
+
+[[package]]
 name = "gui"
 version = "0.1.0"
 dependencies = [
