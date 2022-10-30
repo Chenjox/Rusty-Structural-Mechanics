@@ -34,6 +34,16 @@ impl FuzzyVariable for FuzzyTriangular {
     }
 }
 
+impl FuzzyTriangular {
+    pub fn new(lower: f64, middle: f64, upper: f64) -> Self {
+        return FuzzyTriangular {
+            lower_value: lower,
+            middle_value: middle,
+            upper_value: upper,
+        };
+    }
+}
+
 pub struct FuzzyTrapezoidal {
     lower_value: f64,
     lower_middle_value: f64,
@@ -79,14 +89,15 @@ pub trait FuzzyVariable {
     fn alpha_level_support(&self, alpha_level: f64) -> (f64, f64);
 }
 
-pub fn alpha_level_optimize<F>(fuzz: impl FuzzyVariable, alpha_level: f64, func: F) -> (f64, f64)
+pub fn alpha_level_optimize<F>(fuzz: &impl FuzzyVariable, alpha_level: f64, func: F) -> (f64, f64)
 where
     F: Fn(f64) -> f64,
 {
     // Verfahren des Goldenen Schnitts.
     let suchraum = fuzz.alpha_level_support(alpha_level);
+    let eps = 0.00000001;
     // Minimum
-    let max_iter = 10000;
+    let max_iter = 10000000;
     let mut iter = 0;
     // Startvariablen
     let mut lower_guess = suchraum.0;
@@ -96,20 +107,23 @@ where
     let mut y1 = func(x1);
     let mut y2 = func(x2);
     // Minimum
-    while upper_guess - lower_guess > 0.0001 && iter < max_iter {
+    while (upper_guess - lower_guess).abs() > eps && iter < max_iter {
         if y1 < y2 {
             upper_guess = x2;
             x2 = x1 + (1.0 - SMALL_PHI) * (upper_guess - x1);
             y2 = func(x2);
-        } else if y2 > y1 {
+            //println!("{},{}", lower_guess, upper_guess);
+        } else {
+            // if y2 > y1
             lower_guess = x1;
             x1 = lower_guess + SMALL_PHI * (x2 - lower_guess);
             y1 = func(x1);
+            //println!("{},{}", lower_guess, upper_guess);
         }
         iter += 1;
     }
 
-    let min = lower_guess;
+    let min = y1;
     // Maximum
     let mut lower_guess = suchraum.0;
     let mut upper_guess = suchraum.1;
@@ -119,12 +133,13 @@ where
     let mut y2 = func(x2);
     let mut iter = 0;
 
-    while upper_guess - lower_guess > 0.0001 && iter < max_iter {
+    while (upper_guess - lower_guess).abs() > eps && iter < max_iter {
         if y1 > y2 {
             upper_guess = x2;
             x2 = x1 + (1.0 - SMALL_PHI) * (upper_guess - x1);
             y2 = func(x2);
-        } else if y2 < y1 {
+        } else {
+            // if y2 < y1
             lower_guess = x1;
             x1 = lower_guess + SMALL_PHI * (x2 - lower_guess);
             y1 = func(x1);
@@ -132,7 +147,7 @@ where
         iter += 1;
     }
 
-    let max = upper_guess;
+    let max = y2;
 
     (min, max)
 }
