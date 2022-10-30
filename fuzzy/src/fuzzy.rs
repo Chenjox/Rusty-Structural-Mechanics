@@ -95,9 +95,9 @@ where
 {
     // Verfahren des Goldenen Schnitts.
     let suchraum = fuzz.alpha_level_support(alpha_level);
-    let eps = 0.00000001;
+    let eps = 0.000001;
     // Minimum
-    let max_iter = 10000000;
+    let max_iter = 10000;
     let mut iter = 0;
     // Startvariablen
     let mut lower_guess = suchraum.0;
@@ -110,15 +110,17 @@ where
     while (upper_guess - lower_guess).abs() > eps && iter < max_iter {
         if y1 < y2 {
             upper_guess = x2;
-            x2 = x1 + (1.0 - SMALL_PHI) * (upper_guess - x1);
-            y2 = func(x2);
-            //println!("{},{}", lower_guess, upper_guess);
+            x2 = x1;
+            y2 = y1;
+            x1 = lower_guess + SMALL_PHI * (x2 - lower_guess);
+            y1 = func(x1);
         } else {
             // if y2 > y1
             lower_guess = x1;
-            x1 = lower_guess + SMALL_PHI * (x2 - lower_guess);
-            y1 = func(x1);
-            //println!("{},{}", lower_guess, upper_guess);
+            x1 = x2;
+            y1 = y2;
+            x2 = x1 + (1.0 - SMALL_PHI) * (upper_guess - x1);
+            y2 = func(x2);
         }
         iter += 1;
     }
@@ -136,13 +138,17 @@ where
     while (upper_guess - lower_guess).abs() > eps && iter < max_iter {
         if y1 > y2 {
             upper_guess = x2;
-            x2 = x1 + (1.0 - SMALL_PHI) * (upper_guess - x1);
-            y2 = func(x2);
-        } else {
-            // if y2 < y1
-            lower_guess = x1;
+            x2 = x1;
+            y2 = y1;
             x1 = lower_guess + SMALL_PHI * (x2 - lower_guess);
             y1 = func(x1);
+        } else {
+            // if y2 > y1
+            lower_guess = x1;
+            x1 = x2;
+            y1 = y2;
+            x2 = x1 + (1.0 - SMALL_PHI) * (upper_guess - x1);
+            y2 = func(x2);
         }
         iter += 1;
     }
