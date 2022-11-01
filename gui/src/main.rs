@@ -1,22 +1,37 @@
-use fuzzy::fuzzy::*;
-use gui::util::*;
-use std::f64::consts::PI;
+use iced::pure::widget::Text;
+use iced::pure::{container, text};
+use iced::pure::{Application, Element};
+use iced::{executor, Command, Length, Settings};
 
-fn main() {
-    let f = FuzzyTrapezoidal::new(0.0, 4.0, 5.0, 6.0);
+pub fn main() -> iced::Result {
+    Start::run(Settings::default())
+}
 
-    let mut res = String::new();
-    for i in 0..=100 {
-        let alpha = 0.01 * i as f64;
-        let b = alpha_level_optimize(&f, alpha, |x| x * x - 2.0 * x);
-        res.push_str(&format!(
-            "{},{},{},{},{}\n",
-            alpha,
-            b.0,
-            b.1,
-            &f.alpha_level_support(alpha).0,
-            &f.alpha_level_support(alpha).1
-        ));
+struct Start;
+
+impl Application for Start {
+    type Executor = executor::Default;
+    type Message = ();
+    type Flags = ();
+
+    fn new(_flags: ()) -> (Start, Command<Self::Message>) {
+        (Start, Command::none())
     }
-    write_file("__test.csv", &res);
+
+    fn title(&self) -> String {
+        String::from("Rusty Structural Mechanics")
+    }
+
+    fn update(&mut self, _message: Self::Message) -> Command<Self::Message> {
+        Command::none()
+    }
+
+    fn view(&self) -> Element<Self::Message> {
+        container(text("Test"))
+            .center_x()
+            .center_y()
+            .width(Length::Fill)
+            .height(Length::Fill)
+            .into()
+    }
 }
