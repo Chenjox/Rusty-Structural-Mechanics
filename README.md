@@ -49,13 +49,18 @@ let system_loading = SystemLoading::new( // Next declare a Loading
 );
 ```
 
-The solvers a implementations on the system:
+The solver is a implementations on the system:
 ```rust
 let sol = system.matrix_stiffness_method_first_order(&system_loading);
 ```
 
-It returns a `BeamResultSet` which contains the boundary internal forces of every beam.
-Currently internal forces inside the beam cannot be calculated nicely.
+It returns a `BeamResultSet` which contains the boundary internal forces of every beam, stored in a `BeamResult`.
+Currently internal forces inside the beam can be calculated with the `BeamResult#get_internals_at(x)` where `x` is the position of the coordinate in the local coordinate system.
+
+```rust
+let r = &sol.get_results()[0]; // Select the first beam and borrow it.
+let internal_mid = r.get_internals_at(r.get_beam_length() * 0.5); // Calculate the internal forces in the middle.
+```
 
 ## German
 
