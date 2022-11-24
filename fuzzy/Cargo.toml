@@ -6,3 +6,6 @@ edition = "2021"
 
 [dependencies]
 libm = { version = "0.2.5" }
+argmin = { version = "0.7" }
+argmin-math = { version = "0.2", features = ["nalgebra_v0_31"] }
+nalgebra = { version = "0.31.1" }

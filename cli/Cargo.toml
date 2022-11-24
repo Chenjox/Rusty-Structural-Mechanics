@@ -1,0 +1,9 @@
+[package]
+name = "cli"
+version = "0.1.0"
+authors = ["Chenjox"]
+edition = "2021"
+
+[dependencies]
+structmech = { path = "../structmech" }
+fuzzy = { path = "../fuzzy" }
