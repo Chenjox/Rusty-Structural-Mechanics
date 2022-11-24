@@ -28,3 +28,9 @@ where
         intervals.push((a2, b2, c2));
     }
 } // ternary heap for better caching...
+
+pub fn optimize_multivariat<F>(lower_bounds: Vec<f64>, upper_bounds: Vec<f64>, func: &F)
+where F: Fn(Vec<f64>) -> f64
+{
+    
+}
