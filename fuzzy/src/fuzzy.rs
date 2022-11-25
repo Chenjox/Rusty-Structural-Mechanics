@@ -1,3 +1,5 @@
+use crate::optimization;
+
 const SMALL_PHI: f64 = 0.618033988749894848204586834365638118_f64;
 
 pub struct FuzzyTriangular {
@@ -93,7 +95,6 @@ impl FuzzyVariable for FuzzyTrapezoidal {
 }
 
 pub struct FuzzyAnalysis {
-    pub det_vars: Vec<f64>,
     pub fuzzy_vars: Vec<Box<dyn FuzzyVariable>>,
     pub output_functions: Vec<Box<dyn Fn(&Vec<f64>) -> f64>>,
 }
@@ -109,36 +110,33 @@ impl FuzzyAnalysis {
             lower_bound[i] = low;
             upper_bound[i] = high;
         }
-        let initial = vec![0.0; self.fuzzy_vars.len()];
-        let n = self.fuzzy_vars.len();
-        let mut points = Vec::with_capacity(n + 1);
-        // Anfangspunkte
-        {
-            // Werden mittels lerp erstellt.
-            for i in 0..n {
-                // nehme einen Schritt im Bereich
-                let interval = (initial[i] + lower_bound[i]) * 0.5;
-                // erstelle einen neuen punkt
-                let mut new_point = vec![0.0; n];
-                for k in 0..n {
-                    // der in der Koordinate k vom startpunkt abweicht
-                    if k == i {
-                        new_point[k] = initial[k] + interval
-                    } else {
-                        // und sonst gleich ist.
-                        new_point[k] = initial[k]
-                    }
-                }
-                // und füge Ihn zur der point liste hinzu
-                points.push(new_point);
-            }
+        // Startpunkt in der Mitte
+        let mut initial = vec![0.0; self.fuzzy_vars.len()];
+        for i in 0..self.fuzzy_vars.len() {
+            initial[i] = 0.5 * lower_bound[i] + 0.5 * upper_bound[i];
         }
-        // letztlich der startpunkt
-        points.push(Vec::from(initial));
-        // Nun berechne alle Funktionswerte
 
-        // dafuq
-        unimplemented!();
+        let mut minres = vec![0.0; self.output_functions.len()];
+        let mut maxres = vec![0.0; self.output_functions.len()];
+
+        // Jede Zielfunktion muss maximiert//minimiert werden werden
+        for func in 0..self.output_functions.len() {
+            // Minimum
+            let r_min = optimization::simplex_optimization(
+                &lower_bound,
+                &upper_bound,
+                &initial,
+                &self.output_functions[func],
+            );
+
+            // Maximum
+            let f = |vl: &Vec<f64>| (-&self.output_functions[func](vl));
+            let r_max = optimization::simplex_optimization(&lower_bound, &upper_bound, &initial, f);
+            minres[func] = self.output_functions[func](&r_min);
+            maxres[func] = self.output_functions[func](&r_max);
+        }
+
+        return (minres, maxres);
     }
 }
 
@@ -164,7 +162,7 @@ where
     (min, max)
 }
 
-fn golden_contraction_optimizer<F>(mut lower_guess: f64, mut upper_guess: f64, func: &F) -> f64
+pub fn golden_contraction_optimizer<F>(mut lower_guess: f64, mut upper_guess: f64, func: &F) -> f64
 where
     F: Fn(f64) -> f64,
 {
@@ -178,10 +176,6 @@ where
     let mut iter = 1;
 
     loop {
-        //println!(
-        //    "{},{},{},{},{},{},{}",
-        //    iter, lower_guess, upper_guess, x1, x2, -y1, -y2
-        //);
         if y1 < y2 {
             upper_guess = x2;
             x2 = x1;

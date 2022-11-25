@@ -1,2 +1,2 @@
 pub mod fuzzy;
-pub mod optimization;
+pub(crate) mod optimization;

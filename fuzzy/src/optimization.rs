@@ -86,9 +86,9 @@ fn sort_vals(points: &mut Vec<Vec<f64>>, point_values: &mut Vec<f64>) {
 }
 
 pub fn simplex_optimization<F>(
-    lower_bound: Vec<f64>,
-    upper_bound: Vec<f64>,
-    start_point: Vec<f64>,
+    lower_bound: &Vec<f64>,
+    upper_bound: &Vec<f64>,
+    start_point: &Vec<f64>,
     func: F,
 ) -> Vec<f64>
 where
@@ -119,7 +119,7 @@ where
         }
     }
     // letztlich der startpunkt
-    points.push(Vec::from(start_point));
+    points.push(start_point.clone());
     // erste funktionswerte
     let mut point_values = vec![0.0; n + 1];
     for i in 0..n + 1 {
@@ -142,7 +142,7 @@ where
             }
             dist = dist.sqrt();
             if dist < 1e-10 {
-                println!("{}", iter_counter);
+                //println!("{}", iter_counter);
                 break 'itera;
             }
         }
@@ -251,7 +251,7 @@ mod tests {
         let upper = vec![2.0, 2.0];
 
         let start = vec![0.0, 0.0];
-        let r = simplex_optimization(lower, upper, start, rosenbrock);
+        let r = simplex_optimization(&lower, &upper, &start, rosenbrock);
         assert_approx_eq!(r[0], 1.0, EPS);
         assert_approx_eq!(r[1], 1.0, EPS);
     }
@@ -265,7 +265,7 @@ mod tests {
         let upper = vec![2.0, 2.0];
 
         let start = vec![0.0, 0.0];
-        let r = simplex_optimization(lower, upper, start, optimum_corner);
+        let r = simplex_optimization(&lower, &upper, &start, optimum_corner);
         assert_approx_eq!(r[0], -2.0, EPS);
         assert_approx_eq!(r[1], -2.0, EPS);
     }
