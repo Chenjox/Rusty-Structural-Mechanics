@@ -92,7 +92,7 @@ pub fn simplex_optimization<F>(
     func: F,
 ) -> Vec<f64>
 where
-    F: Fn(&[f64]) -> f64,
+    F: Fn(&Vec<f64>) -> f64,
 {
     let n = lower_bound.len();
 
@@ -229,4 +229,44 @@ where
         }
     }
     return points[0].clone();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_approx_eq::assert_approx_eq;
+
+    const EPS: f64 = 1e-8_f64;
+
+    #[test]
+    fn rosenbrocks_function() {
+        fn rosenbrock(vc: &Vec<f64>) -> f64 {
+            let mut r = 0.0;
+            for i in 0..vc.len() - 1 {
+                r += 100.0 * (vc[i + 1] - (vc[i].powi(2))).powi(2) + (1.0 - vc[i]).powi(2);
+            }
+            return r;
+        }
+        let lower = vec![-2.0, -2.0];
+        let upper = vec![2.0, 2.0];
+
+        let start = vec![0.0, 0.0];
+        let r = simplex_optimization(lower, upper, start, rosenbrock);
+        assert_approx_eq!(r[0], 1.0, EPS);
+        assert_approx_eq!(r[1], 1.0, EPS);
+    }
+
+    #[test]
+    fn double_linear_function() {
+        fn optimum_corner(vc: &Vec<f64>) -> f64 {
+            return vc[0] + vc[1];
+        }
+        let lower = vec![-2.0, -2.0];
+        let upper = vec![2.0, 2.0];
+
+        let start = vec![0.0, 0.0];
+        let r = simplex_optimization(lower, upper, start, optimum_corner);
+        assert_approx_eq!(r[0], -2.0, EPS);
+        assert_approx_eq!(r[1], -2.0, EPS);
+    }
 }

@@ -1,6 +1,6 @@
 use fuzzy::optimization::*;
 
-fn rose(vc: &[f64]) -> f64 {
+fn rose(vc: &Vec<f64>) -> f64 {
     let mut r = 0.0;
     for i in 0..vc.len() - 1 {
         r += 100.0 * (vc[i + 1] - (vc[i].powi(2))).powi(2) + (1.0 - vc[i]).powi(2);
@@ -8,7 +8,7 @@ fn rose(vc: &[f64]) -> f64 {
     return r;
 }
 
-fn optimum_corner(vc: &[f64]) -> f64 {
+fn optimum_corner(vc: &Vec<f64>) -> f64 {
     return vc[0] + vc[1];
 }
 
