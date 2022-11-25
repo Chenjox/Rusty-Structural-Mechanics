@@ -12,9 +12,22 @@ fn simplex_centroid(vals: &[Vec<f64>], excluded: usize, n: usize) -> Vec<f64> {
                 g[j] = g[j] + vals[i][j];
             }
         }
-        g[j] = 1.0 / (n as f64) * g[j];
+        g[j] = 1.0 / ((n) as f64) * g[j];
     }
     return g;
+}
+
+fn is_in_bounds(
+    lower_bound: &Vec<f64>,
+    upper_bound: &Vec<f64>,
+    value: &Vec<f64>,
+    n: usize,
+) -> bool {
+    let mut in_bound = true;
+    for j in 0..n {
+        in_bound = in_bound && lower_bound[j] < value[j] && upper_bound[j] > value[j];
+    }
+    return in_bound;
 }
 
 fn reflection(center: &Vec<f64>, tobereflected: &Vec<f64>, n: usize) -> Vec<f64> {
@@ -123,12 +136,12 @@ where
         sort_vals(&mut points, &mut point_values);
         // hier kommt die terminierung hin.
         {
-            let mut sum = 0.0;
-            for i in 1..n + 1 {
-                sum += (point_values[0] - point_values[i]).powi(2);
+            let mut dist = 0.0;
+            for k in 0..n {
+                dist += (points[0][k] - points[n][k]).powi(2);
             }
-            sum = sum / ((n - 1) as f64);
-            if sum < 1e-6 {
+            dist = dist.sqrt();
+            if dist < 1e-10 {
                 println!("{}", iter_counter);
                 break 'itera;
             }
@@ -140,7 +153,12 @@ where
 
         // Schritt 3
         let r = reflection(&o, &points[n], n);
-        let fr = func(&r);
+        let fr = if is_in_bounds(&lower_bound, &upper_bound, &r, n) {
+            func(&r)
+        } else {
+            point_values[n] + 1.0
+        };
+
         if point_values[0] <= fr && fr < point_values[n - 1] {
             points[n] = r;
             point_values[n] = fr;
@@ -150,7 +168,11 @@ where
         if fr < point_values[0] {
             // reflected is best!
             let e = expand(&o, &r, n);
-            let fe = func(&e);
+            let fe = if is_in_bounds(&lower_bound, &upper_bound, &e, n) {
+                func(&e)
+            } else {
+                point_values[n] + 1.0
+            };
             if fe < fr {
                 points[n] = e;
                 point_values[n] = fe;
@@ -163,7 +185,11 @@ where
         // Schritt 5
         if fr < point_values[n] {
             let c = contract(&o, &r, n);
-            let fc = func(&c);
+            let fc = if is_in_bounds(&lower_bound, &upper_bound, &c, n) {
+                func(&c)
+            } else {
+                point_values[n] + 1.0
+            };
             if fc < fr {
                 points[n] = c;
                 point_values[n] = fc;
@@ -182,7 +208,7 @@ where
             }
         }
         if fr >= point_values[n] {
-            let c = contract(&o, &points[n], n);
+            let c = contract(&o, &points[n], n); // Dieser Punkt muss innerhalb liegen!
             let fc = func(&c);
             if fc < point_values[n] {
                 points[n] = c;

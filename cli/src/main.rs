@@ -8,11 +8,15 @@ fn rose(vc: &[f64]) -> f64 {
     return r;
 }
 
+fn optimum_corner(vc: &[f64]) -> f64 {
+    return vc[0] + vc[1];
+}
+
 pub fn main() {
     let lower = vec![-2.0, -2.0];
     let upper = vec![2.0, 2.0];
 
     let start = vec![0.0, 0.0];
-    let r = simplex_optimization(lower, upper, start, rose);
+    let r = simplex_optimization(lower, upper, start, optimum_corner);
     println!("{:?}", r);
 }
