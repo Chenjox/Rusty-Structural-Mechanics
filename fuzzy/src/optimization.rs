@@ -127,8 +127,9 @@ where
             for i in 1..n + 1 {
                 sum += (point_values[0] - point_values[i]).powi(2);
             }
-            sum = sum / ((n - 2) as f64);
+            sum = sum / ((n - 1) as f64);
             if sum < 1e-6 {
+                println!("{}", iter_counter);
                 break 'itera;
             }
         }
