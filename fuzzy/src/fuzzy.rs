@@ -92,6 +92,56 @@ impl FuzzyVariable for FuzzyTrapezoidal {
     }
 }
 
+pub struct FuzzyAnalysis {
+    pub det_vars: Vec<f64>,
+    pub fuzzy_vars: Vec<Box<dyn FuzzyVariable>>,
+    pub output_functions: Vec<Box<dyn Fn(&Vec<f64>) -> f64>>,
+}
+
+impl FuzzyAnalysis {
+    pub fn alpha_level_optimize(&self, alpha_level: f64) -> (Vec<f64>, Vec<f64>) {
+        let mut lower_bound = vec![0.0; self.fuzzy_vars.len()];
+        let mut upper_bound = vec![0.0; self.fuzzy_vars.len()];
+
+        // Fuzzy Größen
+        for i in 0..self.fuzzy_vars.len() {
+            let (low, high) = self.fuzzy_vars[i].alpha_level_support(alpha_level);
+            lower_bound[i] = low;
+            upper_bound[i] = high;
+        }
+        let initial = vec![0.0; self.fuzzy_vars.len()];
+        let n = self.fuzzy_vars.len();
+        let mut points = Vec::with_capacity(n + 1);
+        // Anfangspunkte
+        {
+            // Werden mittels lerp erstellt.
+            for i in 0..n {
+                // nehme einen Schritt im Bereich
+                let interval = (initial[i] + lower_bound[i]) * 0.5;
+                // erstelle einen neuen punkt
+                let mut new_point = vec![0.0; n];
+                for k in 0..n {
+                    // der in der Koordinate k vom startpunkt abweicht
+                    if k == i {
+                        new_point[k] = initial[k] + interval
+                    } else {
+                        // und sonst gleich ist.
+                        new_point[k] = initial[k]
+                    }
+                }
+                // und füge Ihn zur der point liste hinzu
+                points.push(new_point);
+            }
+        }
+        // letztlich der startpunkt
+        points.push(Vec::from(initial));
+        // Nun berechne alle Funktionswerte
+
+        // dafuq
+        unimplemented!();
+    }
+}
+
 pub trait FuzzyVariable {
     fn get_support(&self) -> (f64, f64);
 

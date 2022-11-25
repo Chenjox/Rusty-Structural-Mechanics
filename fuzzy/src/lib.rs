@@ -1,2 +1,2 @@
 pub mod fuzzy;
-pub mod optimizer;
+pub mod optimization;
