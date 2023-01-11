@@ -7,3 +7,4 @@ edition = "2021"
 [dependencies]
 structmech = { path = "../structmech" }
 fuzzy = { path = "../fuzzy" }
+rand = { version = "0.8.5" }

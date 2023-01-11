@@ -1,4 +1,5 @@
-use fuzzy::fuzzy::*;
+use fuzzy::{fuzzy::*, stochastic::{NormalDistributedVariable, StochasticVariable}};
+use rand::{rngs::ThreadRng, thread_rng};
 
 fn mx0(q: f64, l: f64, x: f64) -> f64 {
     q * 0.5 * (l * l - 2.0 * l * x + x * x)
@@ -67,7 +68,7 @@ fn get_max_vec(l: f64, b: f64, fuzzy: &Vec<f64>) -> f64 {
     -get_max_schnittmoment(fuzzy[0], l, fuzzy[1], b, fuzzy[2], fuzzy[3], fuzzy[4])
 }
 
-pub fn main() {
+pub fn main2() {
     let b = 0.2;
     let l = 10.0;
     let linienlast = FuzzyTrapezoidal::new(14.0, 17.0, 18.5, 22.0);
@@ -100,4 +101,17 @@ pub fn main() {
             alpha, res.0[0], res.1[0], res.0[1], res.1[1]
         );
     }
+}
+
+pub fn main() {
+    let r = NormalDistributedVariable::new(30.0, 2.0);
+    let mut rng = thread_rng();
+
+    
+    let mut values = Vec::new();
+    for _ in 0..100 {
+        values.push(r.get_random_sample(&mut rng));
+    }
+    values.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    println!("{:?}",values);
 }
