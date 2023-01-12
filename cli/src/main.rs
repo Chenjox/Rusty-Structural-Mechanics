@@ -1,5 +1,12 @@
-use fuzzy::{fuzzy::*, stochastic::{NormalDistributedVariable, StochasticVariable}};
-use rand::{rngs::ThreadRng, thread_rng};
+use fuzzy::{
+    fuzzy::*,
+    stochastic::{
+        ExperimentalCumulativeDistributionFunction, NormalDistributedVariable, StochasticAnalysis,
+        StochasticVariable,
+    },
+};
+use plotters::prelude::*;
+use rand::{rngs::ThreadRng, thread_rng, Rng};
 
 fn mx0(q: f64, l: f64, x: f64) -> f64 {
     q * 0.5 * (l * l - 2.0 * l * x + x * x)
@@ -103,15 +110,56 @@ pub fn main2() {
     }
 }
 
-pub fn main() {
-    let r = NormalDistributedVariable::new(30.0, 2.0);
-    let mut rng = thread_rng();
+pub struct Biegebalken {}
 
-    
-    let mut values = Vec::new();
-    for _ in 0..100 {
-        values.push(r.get_random_sample(&mut rng));
+impl<R: Rng> StochasticAnalysis<R> for Biegebalken {
+    fn get_distributions(&self) -> Vec<Box<dyn StochasticVariable<R>>> {
+        return vec![Box::new(NormalDistributedVariable::new(30.0, 20.0))];
     }
-    values.sort_by(|a, b| a.partial_cmp(b).unwrap());
-    println!("{:?}",values);
+    fn output_function(&self, input_vec: &Vec<f64>) -> f64 {
+        return input_vec[0] + 3.0 - input_vec[0].cos();
+    }
+}
+
+fn plot_ecdf(data: &ExperimentalCumulativeDistributionFunction) {
+    let max: f64 = data.get_samples()[data.get_samples().len() - 1];
+    let min: f64 = data.get_samples()[0];
+
+    let root = BitMapBackend::new("0.png", (640, 480)).into_drawing_area();
+    root.fill(&WHITE).unwrap();
+    let mut chart = ChartBuilder::on(&root)
+        .caption("eCDF", ("sans-serif", 50).into_font())
+        .margin(5)
+        .x_label_area_size(30)
+        .y_label_area_size(30)
+        .build_cartesian_2d(min..max, -0.1f64..1f64)
+        .unwrap();
+
+    chart.configure_mesh().draw().unwrap();
+
+    chart
+        .draw_series(LineSeries::new(
+            data.get_samples_cumulative().iter().map(|f| (f[0], f[1])),
+            &RED,
+        ))
+        .unwrap()
+        .label("eCDF")
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+
+    chart
+        .configure_series_labels()
+        .background_style(&WHITE.mix(0.8))
+        .border_style(&BLACK)
+        .draw()
+        .unwrap();
+
+    root.present().unwrap();
+}
+
+pub fn main() {
+    let mut rng = thread_rng();
+    let b = Biegebalken {};
+    let ecdf = b.stochastics_analysis(0.95, 1e-4, 0.95, &mut rng);
+    println!("{:?}", ecdf.get_samples().len());
+    plot_ecdf(&ecdf);
 }
