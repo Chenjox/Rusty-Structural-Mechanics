@@ -55,6 +55,12 @@ impl ECDF {
 
         return res;
     }
+
+    pub fn quantile(&self, quant: f64) -> f64 {
+        let step = 1.0/(self.samples.len() as f64);
+        let approx_index = (quant / step).floor() as usize;
+        return self.samples[approx_index];
+    }
 }
 
 pub trait StochasticAnalysis<R: Rng> {

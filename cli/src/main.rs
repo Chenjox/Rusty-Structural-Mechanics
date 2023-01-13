@@ -159,7 +159,16 @@ fn plot_ecdf(data: &ExperimentalCumulativeDistributionFunction) {
 pub fn main() {
     let mut rng = thread_rng();
     let b = Biegebalken {};
-    let ecdf = b.stochastics_analysis(0.95, 1e-4, 0.95, &mut rng);
+    let ecdf = b.stochastics_analysis(0.95, 1e-3, 0.95, &mut rng);
     println!("{:?}", ecdf.get_samples().len());
+    println!("{}", ecdf.quantile(0.1));
+    println!("{}", ecdf.quantile(0.2));
+    println!("{}", ecdf.quantile(0.3));
+    println!("{}", ecdf.quantile(0.4));
+    println!("{}", ecdf.quantile(0.5));
+    println!("{}", ecdf.quantile(0.6));
+    println!("{}", ecdf.quantile(0.7));
+    println!("{}", ecdf.quantile(0.8));
+    println!("{}", ecdf.quantile(0.95));
     plot_ecdf(&ecdf);
 }
