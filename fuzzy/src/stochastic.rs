@@ -70,6 +70,12 @@ impl ECDF {
             return self.samples[self.samples.len()-1];
         }
     }
+
+    pub fn mean(&self) -> f64 {
+        let sum: f64 = self.samples.iter().sum();
+        let size = self.samples.len() as f64;
+        return sum/size;
+    }
 }
 
 pub trait StochasticAnalysis<R: Rng  + ?Sized> {
