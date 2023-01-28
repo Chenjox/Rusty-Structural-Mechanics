@@ -4,7 +4,7 @@ use rand::{Rng, RngCore};
 use rand_distr::Distribution;
 use rand_distr::Normal;
 
-pub trait StochasticVariable<R: Rng> {
+pub trait StochasticVariable<R: Rng + ?Sized> {
     fn get_random_sample(&self, randomness: &mut R) -> f64;
     //fn get_sample_deterministic(&self) -> f64;
 }
@@ -21,7 +21,7 @@ impl NormalDistributedVariable {
     }
 }
 
-impl<R: Rng> StochasticVariable<R> for NormalDistributedVariable {
+impl<R: Rng  + ?Sized> StochasticVariable<R> for NormalDistributedVariable {
     fn get_random_sample(&self, randomness: &mut R) -> f64 {
         return self.distr.sample(randomness);
     }
@@ -58,12 +58,21 @@ impl ECDF {
 
     pub fn quantile(&self, quant: f64) -> f64 {
         let step = 1.0/(self.samples.len() as f64);
+        let amount = self.samples.len();
         let approx_index = (quant / step).floor() as usize;
-        return self.samples[approx_index];
+        // fallunterscheidung:
+        if approx_index <= 0 {
+            return self.samples[0];
+        } else if (1..amount).contains(&approx_index) {
+            let approx_ind = approx_index as f64;
+            return self.samples[approx_index]  + (step)/(self.samples[approx_index+1] - self.samples[approx_index])*(quant -step * approx_ind);
+        } else {
+            return self.samples[self.samples.len()-1];
+        }
     }
 }
 
-pub trait StochasticAnalysis<R: Rng> {
+pub trait StochasticAnalysis<R: Rng  + ?Sized> {
     fn get_distributions(&self) -> Vec<Box<dyn StochasticVariable<R>>>;
     fn output_function(&self, input_vec: &Vec<f64>) -> f64;
     //

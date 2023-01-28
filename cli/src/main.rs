@@ -6,7 +6,7 @@ use fuzzy::{
     },
 };
 use plotters::prelude::*;
-use rand::{rngs::ThreadRng, thread_rng, Rng};
+use rand::{thread_rng, Rng};
 
 fn mx0(q: f64, l: f64, x: f64) -> f64 {
     q * 0.5 * (l * l - 2.0 * l * x + x * x)
@@ -161,14 +161,9 @@ pub fn main() {
     let b = Biegebalken {};
     let ecdf = b.stochastics_analysis(0.95, 1e-3, 0.95, &mut rng);
     println!("{:?}", ecdf.get_samples().len());
-    println!("{}", ecdf.quantile(0.1));
-    println!("{}", ecdf.quantile(0.2));
-    println!("{}", ecdf.quantile(0.3));
-    println!("{}", ecdf.quantile(0.4));
-    println!("{}", ecdf.quantile(0.5));
-    println!("{}", ecdf.quantile(0.6));
-    println!("{}", ecdf.quantile(0.7));
-    println!("{}", ecdf.quantile(0.8));
-    println!("{}", ecdf.quantile(0.95));
+    for i in 1..20 {
+        let qua = 1.0/20.0 * i as f64;
+        println!("{}, {}", qua, ecdf.quantile(qua));
+    }
     plot_ecdf(&ecdf);
 }
